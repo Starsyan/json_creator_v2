@@ -7,7 +7,7 @@ st.set_page_config(page_title="Excel → JSON Конвертер", layout="wide"
 st.title("📋 Excel → JSON Генератор, Валидация и Перенос промтов (исправлено)")
 
 st.sidebar.header("⚙️ Режим работы")
-mode = st.sidebar.radio("Выберите режим:", ["Создать JSON", "Проверить Excel vs JSON", "Перенести промты (жёстко)"])
+mode = st.sidebar.radio("Выберите режим:", ["Создать JSON", "Проверить Excel vs JSON", "Перенести промты"])
 
 # ----------------- Утилиты -----------------
 
@@ -272,7 +272,7 @@ def generate_json_from_df(df):
     final_sorted = sorted(final, key=id_key_for_sort)
     return [{"0": final_sorted}], warnings
 
-# ------------- Жёсткий перенос промтов ----------------
+# ------------- Перенос промтов ----------------
 
 def update_prompts_in_json_hard(existing_json, df):
     df = df.copy()
@@ -305,7 +305,7 @@ def update_prompts_in_json_hard(existing_json, df):
                     vt = str(row.get("Варианты ответов", "") or "").strip()
                     q["variants_prompt"] = [{"text": vt, "text_chat": vt}] if vt else []
             else:
-                # жёстко заменим на пустой prompt/variants_prompt
+                # заменим на пустой prompt/variants_prompt
                 q["prompt"] = []
                 if q.get("type_questions") in ["variants", "variants_with_other"]:
                     q["variants_prompt"] = []
