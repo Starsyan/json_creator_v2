@@ -97,10 +97,57 @@ def make_prompt(tuning_text, main_text):
 
     # Если длины не совпали: берем каждое значение как есть
     return [{
-        "text": main_text,
-        "text_chat": tuning_text
+        "text": tuning_text,
+        "text_chat": main_text,
     }]
 
+def make_variants_prompt(tuning_variants, main_variants):
+    """
+    Формирует variants_prompt как список объектов [{"text": ..., "text_chat": ...}].
+
+    text       → из "Тюнинг вариантов"
+    text_chat  → из "Варианты ответов"
+
+    Поддерживает:
+    - список вариантов через переносы строк
+    - нумерацию (1., 2., 3.)
+    """
+
+    # нормализуем строки
+    t = str(tuning_variants or "").strip()
+    m = str(main_variants or "").strip()
+
+    # ---------- разрезаем тюнинг ----------
+    if not t:
+        t_items = []
+    elif re.search(r"\d+\.", t):
+        t_items = [i.strip() for i in re.split(r"\d+\.", t) if i.strip()]
+    else:
+        t_items = [i.strip() for i in t.split("\n") if i.strip()]
+
+    # ---------- разрезаем основной текст ----------
+    if not m:
+        m_items = []
+    elif re.search(r"\d+\.", m):
+        m_items = [i.strip() for i in re.split(r"\d+\.", m) if i.strip()]
+    else:
+        m_items = [i.strip() for i in m.split("\n") if i.strip()]
+
+    # ---------- если одинаковая длина ----------
+    if len(t_items) == len(m_items) and len(t_items) > 0:
+        return [
+            {"text": t_val, "text_chat": m_val}
+            for t_val, m_val in zip(t_items, m_items)
+        ]
+
+    # ---------- fallback ----------
+    if t or m:
+        return [{
+            "text": t,
+            "text_chat": m
+        }]
+
+    return []
 
 def parse_answers_from_excel(value):
     """Парсим пары key:value из ячейки (каждая строка) -> возвращаем dict или None"""
@@ -165,7 +212,7 @@ def generate_json_from_df(df):
     parents_map = {}
     warnings = []
 
-    # 1. Создаём основные вопросы (без точки)
+    # 1. Создаём основные вопросы
     for qid, row in rows:
         if not qid:
             warnings.append("Пропущена строка с пустым номером вопроса.")
@@ -255,12 +302,15 @@ def generate_json_from_df(df):
 
         if q_type == "rating":
             sub.update({"rating_grammar": None, "max_rate": None, "is_zero": None})
+
         if q_type in ["variants", "variants_with_other"]:
-            variants_text = str(row.get("Варианты ответов", "") or "").strip()
-            sub.update({
+            main_variants = row.get("Варианты ответов", "")
+            tuning_variants = row.get("Тюнинг вариантов", "")
+            question.update({
                 "sound_variants": True,
-                "variants_prompt": [{"text": variants_text, "text_chat": variants_text}] if variants_text else []
+                "variants_prompt": make_variants_prompt(tuning_variants, main_variants)
             })
+
         if q_type == "yes_no":
             sub.update({"is_additional_other": False})
 
