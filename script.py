@@ -245,7 +245,7 @@ def generate_json_from_df(df):
         }
 
         if q_type == "rating":
-            question.update({"rating_grammar": None, "max_rate": None, "is_zero": None})
+            question.update({"rating_grammar": None, "max_rate": None, "isZero": None})
         if q_type in ["variants", "variants_with_other"]:
             variants_text = str(row.get("Варианты ответов", "") or "").strip()
             question.update({
@@ -301,7 +301,7 @@ def generate_json_from_df(df):
         }
 
         if q_type == "rating":
-            sub.update({"rating_grammar": None, "max_rate": None, "is_zero": None})
+            sub.update({"rating_grammar": None, "max_rate": None, "isZero": None})
 
         if q_type in ["variants", "variants_with_other"]:
             main_variants = row.get("Варианты ответов", "")
